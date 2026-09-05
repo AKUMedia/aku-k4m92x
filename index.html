@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+<meta name="googlebot" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Рабочий план</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        ink: '#08080A',
+        panel: '#0F0F12',
+        line: 'rgba(255,255,255,0.08)',
+        muted: '#8A8A93',
+        akured: '#DB2022',
+        akugreen: '#3ED9A4'
+      },
+      fontFamily: {
+        display: ['"Space Grotesk"', 'sans-serif'],
+        body: ['Inter', 'sans-serif']
+      }
+    }
+  }
+}
+</script>
+<style>
+  body { background:#08080A; color:#EDEDF0; font-family:Inter,sans-serif; -webkit-font-smoothing:antialiased; }
+  h1,h2,h3,.disp { font-family:"Space Grotesk",sans-serif; }
+  .glass { background:rgba(255,255,255,0.028); backdrop-filter:blur(14px); border:1px solid rgba(255,255,255,0.075); }
+  .bar { height:3px; background:rgba(255,255,255,0.07); border-radius:99px; overflow:hidden; }
+  .bar > i { display:block; height:100%; background:#DB2022; border-radius:99px; transition:width .35s ease; }
+  .bar.done > i { background:#3ED9A4; }
+  .tick { width:20px; height:20px; flex:0 0 20px; border-radius:6px; border:1.5px solid rgba(255,255,255,0.22); display:grid; place-items:center; cursor:pointer; transition:all .15s; margin-top:1px; }
+  .tick:hover { border-color:#DB2022; }
+  .tick.on { background:#3ED9A4; border-color:#3ED9A4; }
+  .tick.on svg { opacity:1; }
+  .tick svg { opacity:0; width:12px; height:12px; color:#08080A; }
+  .task.on span.t { color:#6E6E78; text-decoration:line-through; text-decoration-color:rgba(255,255,255,.2); }
+  details > summary { list-style:none; cursor:pointer; }
+  details > summary::-webkit-details-marker { display:none; }
+  details[open] .chev { transform:rotate(180deg); }
+  .chev { transition:transform .2s; }
+  :focus-visible { outline:2px solid #DB2022; outline-offset:2px; }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
+</style>
+</head>
+<body class="font-body">
+
+<div class="max-w-3xl mx-auto px-4 py-8 sm:px-6 sm:py-12">
+
+  <!-- HERO -->
+  <header class="mb-10">
+    <div class="flex items-baseline justify-between mb-1">
+      <p class="text-muted text-[13px]">Алексей · AKU</p>
+      <p id="daysLeft" class="text-muted text-[13px]"></p>
+    </div>
+    <h1 class="font-display text-[26px] sm:text-[34px] font-bold leading-tight mb-6">План до 31 декабря 2026</h1>
+
+    <div class="glass rounded-2xl p-6">
+      <div class="flex items-end gap-3 mb-4">
+        <span id="totalPct" class="font-display text-[56px] sm:text-[68px] font-bold leading-none tracking-tight">0%</span>
+        <span class="text-muted text-sm pb-3">выполнено по всем направлениям</span>
+      </div>
+      <div class="bar mb-4"><i id="totalBar" style="width:0%"></i></div>
+      <div id="totalStats" class="text-[13px] text-muted"></div>
+    </div>
+  </header>
+
+  <!-- НАПРАВЛЕНИЯ -->
+  <main id="app" class="space-y-4"></main>
+
+  <footer class="mt-12 pt-6 border-t border-line flex items-center justify-between gap-4">
+    <p class="text-[12px] text-muted leading-relaxed max-w-xs">Галочки сохраняются в браузере. Открывай с одного устройства, чтобы прогресс не терялся.</p>
+    <button id="reset" class="text-[12px] text-muted hover:text-akured border border-line hover:border-akured rounded-lg px-3 py-2 transition shrink-0">Сбросить всё</button>
+  </footer>
+</div>
+
+<script>
+const DATA = [
+  {
+    id: 'nomus',
+    name: 'Номис',
+    weight: 25,
+    goal: 'Превратить один проект в постоянного клиента: $500+/мес и 2 реферала из Турции',
+    stages: [
+      { name: 'Сдача и запуск', w: 25, tasks: [
+        'Написать Номису: проект готов, жду номер WhatsApp и доступ к серверу',
+        'В том же письме зафиксировать: срок переноса, 2 недели тестового периода, дальше сопровождение $150/мес',
+        'Проверить в коде: автор сообщения в группе (не отправитель-группа) — иначе платежи сможет подтвердить любой участник',
+        'Проверить: CSP_STATUS_NO = 32 (Ticari Başkan Onayında)',
+        'Проверить: таблица собирается на финальных 9 столбцах клиента',
+        'Проверить: сброс дедупа при Geri Gönder — исправленный документ должен вернуться',
+        'Проверить: session.json держит сессию между перезапусками (нужно для 24/7)',
+        'Записать видео-демо полного цикла',
+        'Перенести на сервер клиента, запустить 24/7',
+        'Подключить боевую группу WhatsApp',
+        'Отдать инструкцию по эксплуатации + пояснить журнал journal.jsonl'
+      ]},
+      { name: 'Подписка $150/мес', w: 15, tasks: [
+        'Проговорить подписку в момент сдачи, пока клиент доволен',
+        'Расписать что входит: сервер, мониторинг, ИИ-разбор вместо триггеров, архив скриншотов по датам',
+        'Получить первую оплату'
+      ]},
+      { name: 'Обучение $200', w: 15, tasks: [
+        'Убедиться, что структура 8 модулей у клиента и получить правки',
+        'Получить оплату $200',
+        'Писать по 2 урока в неделю',
+        'Закрыть все 8 модулей'
+      ]},
+      { name: 'Проверка контрагентов', w: 20, tasks: [
+        'Собрать файл вопросов по задаче (формат как по автоматизации платежей)',
+        'Созвон по задаче, записать',
+        'Собрать КП из транскрипта по системе 70-20-10',
+        'Согласовать цену и получить предоплату'
+      ]},
+      { name: 'Рефералы в Турции', w: 25, tasks: [
+        'Спросить Номиса: язык материалов (TR/EN) и что конкретно нужно Memorial и стоматологии',
+        'Подготовить материалы на нужном языке',
+        'Выйти на контакт через Номиса',
+        'Довести до созвона',
+        'Закрыть первого реферала в сделку'
+      ]}
+    ]
+  },
+  {
+    id: 'clients',
+    name: 'Клиенты AKU Automation',
+    weight: 30,
+    goal: '3 новых платящих клиента до 31.12, из них минимум 2 на подписке',
+    stages: [
+      { name: 'Оружие продаж', w: 20, tasks: [
+        'Видео-демо 60–90 сек: платёж → WhatsApp → ответ → подтверждение в системе',
+        'Согласовать с Номисом публичную формулировку кейса',
+        'Кейс на aku-automation.io',
+        'Кейс в канал, Threads, TikTok'
+      ]},
+      { name: 'Реактивация тёплых', w: 10, tasks: [
+        'Абдуллох (toolsworld): дожать условия оплаты, отправить референс-ролик',
+        'BTime Clinic: вернуться с видео-демо'
+      ]},
+      { name: 'Созвоны как основной формат', w: 15, tasks: [
+        'Написать скрипт первого созвона на 15 минут — вопросы про боль, не презентация',
+        'Настроить запись созвона + транскрибацию',
+        'Шаблон КП из транскрипта по системе 70-20-10',
+        'Провести первые 3 созвона'
+      ]},
+      { name: 'Входящие из контента', w: 25, tasks: [
+        'Пост «ищу бизнес для внедрения» в Threads — раз в неделю',
+        'Отвечать на каждое входящее в течение суток',
+        'Вести трекер лидов: кто, откуда, на какой стадии',
+        'Довести первое входящее до созвона',
+        'Закрыть первого клиента из входящих'
+      ]},
+      { name: 'Платный трафик', w: 20, tasks: [
+        'Поставить Яндекс.Метрику на aku-automation.io',
+        'Подобрать 2–3 бизнес-канала в Telegram',
+        'Купить 2 поста в рамках $100',
+        'Посчитать цену заявки',
+        'Решение: масштабировать этот канал или менять'
+      ]},
+      { name: 'Ильяс', w: 10, tasks: [
+        'Передать ему видео-демо и кейс Номиса',
+        'Созвон-разбор: что говорить, что не обещать',
+        'Проконтролировать его первые 20 касаний'
+      ]}
+    ]
+  },
+  {
+    id: 'lavka',
+    name: 'AKU Лавка',
+    weight: 20,
+    goal: 'Первые продажи к 20 октября, $1000/мес чистыми к 31.12',
+    note: 'Точка проверки 20.10 — если продаж нет, направление замораживается и часы уходят в клиентов',
+    stages: [
+      { name: 'Фундамент', w: 20, tasks: [
+        'Купить домен akulavka.com',
+        'Решить схему закупки подписок без зарубежной карты — как именно оформляем',
+        'Список стартовых позиций: Claude, ChatGPT, Gemini',
+        'Посчитать закупку, цену и маржу по каждой позиции',
+        'Собрать способы оплаты для РФ, Казахстана, Беларуси — больше, чем у конкурента'
+      ]},
+      { name: 'Сайт', w: 25, tasks: [
+        'Структура страниц и тексты',
+        'Дизайн: тёплый, но по делу — не переносить стиль прошлых проектов',
+        'Каталог позиций с ценами',
+        'Оформление заказа → заявка в Telegram',
+        'Залить на GitHub Pages, привязать домен'
+      ]},
+      { name: 'Приём заказов', w: 20, tasks: [
+        'Куда падают заявки и кто отвечает',
+        'Скрипт выдачи: что спрашиваем у клиента, что отдаём',
+        'Правила возврата и что делаем, если подписка слетела'
+      ]},
+      { name: 'Первые 10 продаж', w: 20, tasks: [
+        'Анонс в канале «Лёха про ИИ»',
+        'Пост в Threads и TikTok',
+        'Обработать первые заявки вручную',
+        'Собрать 3 отзыва и выложить'
+      ]},
+      { name: 'Трафик', w: 15, tasks: [
+        'Постоянная ссылка на Лавку в описании канала',
+        'Рубрика про подписки в контенте',
+        'Связка с ПлатиПоМиру для тех, кто хочет платить сам'
+      ]}
+    ]
+  },
+  {
+    id: 'content',
+    name: 'Контент-машина',
+    weight: 15,
+    goal: 'Одна публикация в день. TG 538→1000, TikTok 338→2000, Threads 378→1500',
+    stages: [
+      { name: 'Ритм', w: 30, tasks: [
+        'Карусель каждый день в 21:00–22:00',
+        'Тот же материал дублировать в TikTok, Instagram, Threads',
+        'Продержать ритм 14 дней подряд',
+        'Продержать ритм месяц'
+      ]},
+      { name: 'Запас', w: 20, tasks: [
+        'Собрать список из 30 тем',
+        'Держать 7 готовых каруселей на неделю вперёд'
+      ]},
+      { name: 'Threads', w: 20, tasks: [
+        '2 коротких поста в день',
+        '20 минут комментариев в чужих ветках ежедневно',
+        'Закреп обновить на кейс Номиса'
+      ]},
+      { name: 'Аналитика', w: 30, tasks: [
+        'Трекинговые ссылки на каждый канал',
+        'Недельная сводка: подписчики, заявки, откуда пришли',
+        'Ответить цифрами на вопрос — какой канал приносит клиентов',
+        'Убрать или сократить канал, который не приносит ничего'
+      ]}
+    ]
+  },
+  {
+    id: 'jobs',
+    name: 'Jobs Hub',
+    weight: 5,
+    goal: 'Режим поддержки: не терять аудиторию. Час в неделю, не в день',
+    note: 'Сознательно не развиваем до тех пор, пока Лавка не пройдёт точку проверки',
+    stages: [
+      { name: 'Ритм вакансий', w: 40, tasks: [
+        '3–5 вакансий в неделю в канал',
+        'Держать ритм месяц без пропусков'
+      ]},
+      { name: 'Критичные техдолги', w: 30, tasks: [
+        'Ключи Supabase вынести в .env',
+        'Включить RLS',
+        'Развести схему jobs / vacancies'
+      ]},
+      { name: 'Модель монетизации', w: 30, tasks: [
+        'Выбрать модель на бумаге: платное размещение, комиссия или реклама',
+        'Посчитать, при каком количестве пользователей она окупается',
+        'Решить дату, когда возвращаемся к проекту всерьёз'
+      ]}
+    ]
+  },
+  {
+    id: 'personal',
+    name: 'Личное',
+    weight: 5,
+    goal: 'Учёба закрыта, режим держится, деньги откладываются',
+    note: 'Допиши сюда своё — я знаю про тебя не всё',
+    stages: [
+      { name: 'Учёба и практика', w: 40, tasks: [
+        'МИУП: закрыть семестр без долгов',
+        'Практика в «Двери Дориан»: отчёт сдан'
+      ]},
+      { name: 'Режим работы', w: 35, tasks: [
+        'Один главный фронт в день, не три',
+        'Новые идеи не начинать — записывать в отдельный список и возвращаться к нему раз в месяц',
+        'Держать честные 4–5 часов сфокусированной работы'
+      ]},
+      { name: 'Деньги', w: 25, tasks: [
+        'Откладывать долю с каждого платежа клиента',
+        'Собрать на MacBook M5 к началу 2027'
+      ]}
+    ]
+  }
+];
+
+const KEY = 'aku-goals-v1';
+let state = {};
+let memoryOnly = false;
+
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    state = raw ? JSON.parse(raw) : {};
+  } catch (e) { memoryOnly = true; state = {}; }
+}
+function save() {
+  if (memoryOnly) return;
+  try { localStorage.setItem(KEY, JSON.stringify(state)); }
+  catch (e) { memoryOnly = true; }
+}
+
+const key = (d, s, t) => `${d}.${s}.${t}`;
+const isDone = (d, s, t) => !!state[key(d, s, t)];
+
+function stagePct(dir, si) {
+  const st = dir.stages[si];
+  const done = st.tasks.filter((_, ti) => isDone(dir.id, si, ti)).length;
+  return st.tasks.length ? done / st.tasks.length : 0;
+}
+function dirPct(dir) {
+  const total = dir.stages.reduce((a, s) => a + s.w, 0);
+  const got = dir.stages.reduce((a, s, i) => a + s.w * stagePct(dir, i), 0);
+  return total ? got / total : 0;
+}
+function nextTask(dir) {
+  for (let si = 0; si < dir.stages.length; si++) {
+    for (let ti = 0; ti < dir.stages[si].tasks.length; ti++) {
+      if (!isDone(dir.id, si, ti)) return dir.stages[si].tasks[ti];
+    }
+  }
+  return null;
+}
+
+const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+
+function render() {
+  const app = document.getElementById('app');
+  app.innerHTML = DATA.map(dir => {
+    const p = Math.round(dirPct(dir) * 100);
+    const nx = nextTask(dir);
+    const stages = dir.stages.map((st, si) => {
+      const sp = Math.round(stagePct(dir, si) * 100);
+      const tasks = st.tasks.map((t, ti) => {
+        const on = isDone(dir.id, si, ti);
+        return `<li class="task ${on ? 'on' : ''} flex gap-3 items-start py-[7px]">
+          <button class="tick ${on ? 'on' : ''}" data-d="${dir.id}" data-s="${si}" data-t="${ti}" aria-pressed="${on}" aria-label="Отметить">${CHECK}</button>
+          <span class="t text-[14px] leading-[1.5]">${t}</span>
+        </li>`;
+      }).join('');
+      return `<div class="pt-5 first:pt-1">
+        <div class="flex items-baseline justify-between gap-3 mb-2">
+          <h3 class="font-display text-[15px] font-semibold">${st.name}</h3>
+          <span class="text-[12px] text-muted shrink-0 tabular-nums">${sp}% · вес ${st.w}</span>
+        </div>
+        <div class="bar ${sp === 100 ? 'done' : ''} mb-1"><i style="width:${sp}%"></i></div>
+        <ul>${tasks}</ul>
+      </div>`;
+    }).join('');
+
+    return `<details class="glass rounded-2xl overflow-hidden">
+      <summary class="p-5">
+        <div class="flex items-start justify-between gap-4">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2.5 mb-1.5">
+              <h2 class="font-display text-[19px] font-semibold">${dir.name}</h2>
+              <span class="text-[11px] text-muted border border-line rounded px-1.5 py-0.5 shrink-0">вес ${dir.weight}</span>
+            </div>
+            <p class="text-[13px] text-muted leading-relaxed">${dir.goal}</p>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="font-display text-[24px] font-bold tabular-nums ${p === 100 ? 'text-akugreen' : ''}">${p}%</div>
+            <svg class="chev w-4 h-4 text-muted ml-auto mt-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+        </div>
+        <div class="bar ${p === 100 ? 'done' : ''} mt-4"><i style="width:${p}%"></i></div>
+        ${nx ? `<p class="mt-3 text-[13px] leading-relaxed"><span class="text-akured">Следующий шаг:</span> <span class="text-white/80">${nx}</span></p>`
+             : `<p class="mt-3 text-[13px] text-akugreen">Направление закрыто полностью</p>`}
+        ${dir.note ? `<p class="mt-2 text-[12px] text-muted leading-relaxed">${dir.note}</p>` : ''}
+      </summary>
+      <div class="px-5 pb-5 border-t border-line">${stages}</div>
+    </details>`;
+  }).join('');
+
+  const totalW = DATA.reduce((a, d) => a + d.weight, 0);
+  const got = DATA.reduce((a, d) => a + d.weight * dirPct(d), 0);
+  const pct = Math.round((got / totalW) * 100);
+  document.getElementById('totalPct').textContent = pct + '%';
+  document.getElementById('totalBar').style.width = pct + '%';
+
+  let all = 0, done = 0;
+  DATA.forEach(d => d.stages.forEach((s, si) => {
+    all += s.tasks.length;
+    s.tasks.forEach((_, ti) => { if (isDone(d.id, si, ti)) done++; });
+  }));
+  document.getElementById('totalStats').textContent =
+    `${done} из ${all} задач · ${DATA.length} направления` + (memoryOnly ? ' · прогресс не сохраняется в этом окне' : '');
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('.tick');
+  if (!b) return;
+  const k = key(b.dataset.d, b.dataset.s, b.dataset.t);
+  const parent = b.closest('details');
+  const scroll = window.scrollY;
+  state[k] = !state[k];
+  if (!state[k]) delete state[k];
+  save();
+  const openIds = [...document.querySelectorAll('details')].map(d => d.open);
+  render();
+  [...document.querySelectorAll('details')].forEach((d, i) => d.open = openIds[i]);
+  window.scrollTo(0, scroll);
+});
+
+document.getElementById('reset').addEventListener('click', () => {
+  if (!confirm('Снять все галочки и начать заново?')) return;
+  state = {};
+  save();
+  render();
+});
+
+(function days() {
+  const end = new Date('2026-12-31T23:59:59');
+  const n = Math.max(0, Math.ceil((end - new Date()) / 86400000));
+  document.getElementById('daysLeft').textContent = n + ' дней до конца года';
+})();
+
+load();
+render();
+</script>
+</body>
+</html>
