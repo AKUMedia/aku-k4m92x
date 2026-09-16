@@ -12,12 +12,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
-tailwind.config = {
-  theme: { extend: {
-    colors: { ink:'#08080A', muted:'#8A8A93', akured:'#DB2022', akugreen:'#3ED9A4', gold:'#F2B138' },
-    fontFamily: { display:['"Space Grotesk"','sans-serif'], body:['Inter','sans-serif'] }
-  }}
-}
+tailwind.config = { theme: { extend: {
+  colors: { ink:'#08080A', muted:'#8A8A93', akured:'#DB2022', akugreen:'#3ED9A4', gold:'#F2B138' },
+  fontFamily: { display:['"Space Grotesk"','sans-serif'], body:['Inter','sans-serif'] } }}}
 </script>
 <style>
   body { background:#08080A; color:#EDEDF0; font-family:Inter,sans-serif; -webkit-font-smoothing:antialiased; }
@@ -33,12 +30,15 @@ tailwind.config = {
   .tick.on { background:#3ED9A4; border-color:#3ED9A4; }
   .tick.on svg { opacity:1; }
   .tick svg { opacity:0; width:12px; height:12px; color:#08080A; }
-  .task.on span.t { color:#6E6E78; text-decoration:line-through; text-decoration-color:rgba(255,255,255,.2); }
+  .task.on .t { color:#6E6E78; text-decoration:line-through; text-decoration-color:rgba(255,255,255,.2); }
+  .ico { width:26px; height:26px; flex:0 0 26px; display:grid; place-items:center; border-radius:7px; color:#5C5C66; transition:all .15s; }
+  .ico:hover { background:rgba(255,255,255,0.07); color:#EDEDF0; }
+  .ico svg { width:13px; height:13px; }
   details > summary { list-style:none; cursor:pointer; }
   details > summary::-webkit-details-marker { display:none; }
   details[open] .chev { transform:rotate(180deg); }
   .chev { transition:transform .2s; }
-  .tab { padding:7px 14px; border-radius:9px; font-size:14px; color:#8A8A93; transition:all .15s; }
+  .tab { padding:7px 13px; border-radius:9px; font-size:13.5px; color:#8A8A93; transition:all .15s; white-space:nowrap; }
   .tab.on { background:rgba(255,255,255,0.07); color:#EDEDF0; }
   .chip { padding:5px 12px; border-radius:8px; font-size:13px; color:#8A8A93; border:1px solid rgba(255,255,255,0.075); transition:all .15s; }
   .chip.on { background:rgba(242,177,56,0.13); border-color:rgba(242,177,56,0.4); color:#F2B138; }
@@ -49,8 +49,14 @@ tailwind.config = {
   .btn:hover { opacity:.87; }
   .btn-g { border:1px solid rgba(255,255,255,0.1); color:#8A8A93; font-size:12.5px; border-radius:8px; padding:6px 11px; transition:all .15s; }
   .btn-g:hover { border-color:rgba(255,255,255,0.25); color:#EDEDF0; }
-  .bought { opacity:.42; }
-  .bought .nm { text-decoration:line-through; text-decoration-color:rgba(255,255,255,.3); }
+  .done-x { opacity:.4; }
+  .done-x .nm { text-decoration:line-through; text-decoration-color:rgba(255,255,255,.3); }
+  .due { font-size:11.5px; border-radius:6px; padding:2px 8px; border:1px solid; white-space:nowrap; }
+  .due-red { color:#DB2022; border-color:rgba(219,32,34,.45); background:rgba(219,32,34,.1); }
+  .due-gold { color:#F2B138; border-color:rgba(242,177,56,.4); background:rgba(242,177,56,.1); }
+  .due-grey { color:#8A8A93; border-color:rgba(255,255,255,.1); }
+  #syncBox { position:fixed; inset:0; background:rgba(0,0,0,.72); display:none; place-items:center; padding:16px; z-index:50; }
+  #syncBox.on { display:grid; }
   :focus-visible { outline:2px solid #DB2022; outline-offset:2px; }
   @media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
 </style>
@@ -65,13 +71,14 @@ tailwind.config = {
       <p id="daysLeft" class="text-muted text-[13px]"></p>
     </div>
     <h1 class="font-display text-[26px] sm:text-[34px] font-bold leading-tight mb-5">План до 31 декабря 2026</h1>
-    <nav class="flex gap-1 glass rounded-xl p-1 w-fit">
+    <nav class="flex gap-1 glass rounded-xl p-1 w-fit overflow-x-auto">
       <button class="tab on" data-view="plan">Задачи</button>
       <button class="tab" data-view="money">Деньги</button>
+      <button class="tab" data-view="wish">Хотелки</button>
     </nav>
   </header>
 
-  <!-- ================= ЗАДАЧИ ================= -->
+  <!-- ЗАДАЧИ -->
   <div id="view-plan">
     <div class="glass rounded-2xl p-6 mb-4">
       <div class="flex items-end gap-3 mb-4">
@@ -84,532 +91,617 @@ tailwind.config = {
     <main id="app" class="space-y-4"></main>
   </div>
 
-  <!-- ================= ДЕНЬГИ ================= -->
+  <!-- ДЕНЬГИ -->
   <div id="view-money" class="hidden">
-
     <div class="glass rounded-2xl p-6 mb-6">
-      <div class="grid grid-cols-3 gap-4">
-        <div>
-          <p class="text-muted text-[12px] mb-1.5">Накоплено по целям</p>
-          <p id="mSaved" class="font-display text-[22px] sm:text-[26px] font-bold text-gold tabular-nums">$0</p>
-        </div>
-        <div>
-          <p class="text-muted text-[12px] mb-1.5">Осталось собрать</p>
-          <p id="mLeft" class="font-display text-[22px] sm:text-[26px] font-bold tabular-nums">$0</p>
-        </div>
-        <div>
-          <p class="text-muted text-[12px] mb-1.5">Хотелки, не куплено</p>
-          <p id="mWish" class="font-display text-[22px] sm:text-[26px] font-bold tabular-nums">$0</p>
-        </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <div><p class="text-muted text-[12px] mb-1.5">Накоплено по целям</p><p id="mSaved" class="font-display text-[21px] sm:text-[25px] font-bold text-gold tabular-nums">$0</p></div>
+        <div><p class="text-muted text-[12px] mb-1.5">Осталось собрать</p><p id="mLeft" class="font-display text-[21px] sm:text-[25px] font-bold tabular-nums">$0</p></div>
+        <div><p class="text-muted text-[12px] mb-1.5">Расходы впереди</p><p id="mExp" class="font-display text-[17px] sm:text-[20px] font-bold tabular-nums leading-tight">—</p></div>
       </div>
     </div>
 
-    <!-- Финансовые цели -->
     <section class="mb-10">
+      <div class="flex items-center justify-between mb-1">
+        <h2 class="font-display text-[19px] font-semibold">Расходы</h2>
+        <button id="addExpBtn" class="btn-g">+ Добавить расход</button>
+      </div>
+      <p id="expSub" class="text-[13px] text-muted mb-4"></p>
+      <div id="expForm" class="glass rounded-2xl p-4 mb-4 hidden">
+        <div class="space-y-2.5">
+          <input id="eName" class="fld" placeholder="На что">
+          <div class="grid grid-cols-2 gap-2.5">
+            <input id="eAmount" class="fld" type="number" inputmode="decimal" placeholder="Сумма">
+            <select id="eCur" class="fld"><option value="USD">$ доллары</option><option value="BYN">Br рубли</option></select>
+          </div>
+          <input id="eDate" class="fld" type="date">
+          <input id="eNote" class="fld" placeholder="Пояснение (необязательно)">
+          <div class="flex gap-2 pt-1"><button id="eSave" class="btn">Сохранить</button><button id="eCancel" class="btn-g">Отмена</button></div>
+        </div>
+      </div>
+      <div id="expList" class="space-y-3"></div>
+    </section>
+
+    <section>
       <div class="flex items-center justify-between mb-4">
         <h2 class="font-display text-[19px] font-semibold">Финансовые цели</h2>
         <button id="addGoalBtn" class="btn-g">+ Добавить цель</button>
       </div>
-
       <div id="goalForm" class="glass rounded-2xl p-4 mb-4 hidden">
         <div class="space-y-2.5">
-          <input id="gName" class="fld" placeholder="Название — например, MacBook или доход в месяц">
+          <input id="gName" class="fld" placeholder="Название цели">
           <div class="grid grid-cols-2 gap-2.5">
             <input id="gTarget" class="fld" type="number" inputmode="decimal" placeholder="Цель, $">
             <input id="gCurrent" class="fld" type="number" inputmode="decimal" placeholder="Уже есть, $">
           </div>
-          <input id="gNote" class="fld" placeholder="Срок или пояснение (необязательно)">
-          <div class="flex gap-2 pt-1">
-            <button id="gSave" class="btn">Сохранить цель</button>
-            <button id="gCancel" class="btn-g">Отмена</button>
-          </div>
+          <input id="gDate" class="fld" type="date">
+          <input id="gNote" class="fld" placeholder="Пояснение (необязательно)">
+          <div class="flex gap-2 pt-1"><button id="gSave" class="btn">Сохранить</button><button id="gCancel" class="btn-g">Отмена</button></div>
         </div>
       </div>
-
       <div id="goalList" class="space-y-3"></div>
-    </section>
-
-    <!-- Хотелки -->
-    <section>
-      <div class="flex items-center justify-between mb-1">
-        <h2 class="font-display text-[19px] font-semibold">Хотелки</h2>
-        <button id="addWishBtn" class="btn-g">+ Добавить хотелку</button>
-      </div>
-      <p id="wishSub" class="text-[13px] text-muted mb-4"></p>
-
-      <div id="wishForm" class="glass rounded-2xl p-4 mb-4 hidden">
-        <div class="space-y-2.5">
-          <input id="wName" class="fld" placeholder="Что хочу купить">
-          <div class="grid grid-cols-2 gap-2.5">
-            <input id="wPrice" class="fld" type="number" inputmode="decimal" placeholder="Цена, $">
-            <select id="wPrio" class="fld">
-              <option value="high">Высокий приоритет</option>
-              <option value="mid" selected>Средний приоритет</option>
-              <option value="low">Низкий приоритет</option>
-            </select>
-          </div>
-          <input id="wUrl" class="fld" placeholder="Ссылка на товар (необязательно)">
-          <div class="flex gap-2 pt-1">
-            <button id="wSave" class="btn">Сохранить</button>
-            <button id="wCancel" class="btn-g">Отмена</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="flex flex-wrap items-center gap-2 mb-4">
-        <button class="chip on" data-f="all">Все</button>
-        <button class="chip" data-f="high">Высокий</button>
-        <button class="chip" data-f="mid">Средний</button>
-        <button class="chip" data-f="low">Низкий</button>
-        <button class="chip" data-f="bought">Куплено</button>
-        <select id="wSort" class="fld ml-auto" style="width:auto;padding:5px 10px;font-size:13px">
-          <option value="prio">По важности</option>
-          <option value="cheap">Сначала дешёвые</option>
-          <option value="rich">Сначала дорогие</option>
-        </select>
-      </div>
-
-      <div id="wishList" class="grid sm:grid-cols-2 gap-3"></div>
     </section>
   </div>
 
-  <footer class="mt-12 pt-6 border-t border-white/10 flex items-center justify-between gap-4">
-    <p class="text-[12px] text-muted leading-relaxed max-w-xs">Всё сохраняется в браузере этого устройства.</p>
-    <button id="reset" class="text-[12px] text-muted hover:text-akured border border-white/10 hover:border-akured rounded-lg px-3 py-2 transition shrink-0">Сбросить всё</button>
+  <!-- ХОТЕЛКИ -->
+  <div id="view-wish" class="hidden">
+    <div class="flex items-center justify-between mb-1">
+      <h2 class="font-display text-[19px] font-semibold">Хотелки</h2>
+      <button id="addWishBtn" class="btn-g">+ Добавить</button>
+    </div>
+    <p id="wishSub" class="text-[13px] text-muted mb-4"></p>
+    <div id="wishForm" class="glass rounded-2xl p-4 mb-4 hidden">
+      <div class="space-y-2.5">
+        <input id="wName" class="fld" placeholder="Что хочу купить">
+        <div class="grid grid-cols-2 gap-2.5">
+          <input id="wPrice" class="fld" type="number" inputmode="decimal" placeholder="Цена, $">
+          <select id="wPrio" class="fld"><option value="high">Высокий</option><option value="mid" selected>Средний</option><option value="low">Низкий</option></select>
+        </div>
+        <input id="wUrl" class="fld" placeholder="Ссылка (необязательно)">
+        <div class="flex gap-2 pt-1"><button id="wSave" class="btn">Сохранить</button><button id="wCancel" class="btn-g">Отмена</button></div>
+      </div>
+    </div>
+    <div class="flex flex-wrap items-center gap-2 mb-4">
+      <button class="chip on" data-f="all">Все</button>
+      <button class="chip" data-f="high">Высокий</button>
+      <button class="chip" data-f="mid">Средний</button>
+      <button class="chip" data-f="low">Низкий</button>
+      <button class="chip" data-f="bought">Куплено</button>
+      <select id="wSort" class="fld ml-auto" style="width:auto;padding:5px 10px;font-size:13px">
+        <option value="prio">По важности</option><option value="cheap">Сначала дешёвые</option><option value="rich">Сначала дорогие</option>
+      </select>
+    </div>
+    <div id="wishList" class="grid sm:grid-cols-2 gap-3"></div>
+  </div>
+
+  <footer class="mt-12 pt-6 border-t border-white/10 flex items-center justify-between gap-3 flex-wrap">
+    <p class="text-[12px] text-muted leading-relaxed max-w-[200px]">Данные в браузере этого устройства.</p>
+    <div class="flex gap-2">
+      <button id="syncBtn" class="text-[12px] text-gold border border-gold/40 rounded-lg px-3 py-2">Перенос на телефон</button>
+      <button id="reset" class="text-[12px] text-muted hover:text-akured border border-white/10 hover:border-akured rounded-lg px-3 py-2 transition">Сброс</button>
+    </div>
   </footer>
 </div>
 
+<div id="syncBox">
+  <div class="glass rounded-2xl p-5 max-w-lg w-full">
+    <h3 class="font-display text-[17px] font-semibold mb-2">Перенос между устройствами</h3>
+    <p class="text-[13px] text-muted mb-3 leading-relaxed">Скопируй код здесь и вставь его на другом устройстве, затем нажми «Загрузить». Всё перезапишется данными из кода.</p>
+    <textarea id="syncText" class="fld font-mono" style="height:150px;font-size:11px" spellcheck="false"></textarea>
+    <div class="flex gap-2 mt-3 flex-wrap">
+      <button id="syncCopy" class="btn">Скопировать</button>
+      <button id="syncLoad" class="btn-g">Загрузить из кода</button>
+      <button id="syncClose" class="btn-g ml-auto">Закрыть</button>
+    </div>
+  </div>
+</div>
+
 <script>
-/* ============ ДАННЫЕ: ЗАДАЧИ ============ */
-const DATA = [
-  { id:'nomus', name:'Номис', weight:25,
-    goal:'Превратить один проект в постоянного клиента: $500+/мес и 2 реферала из Турции',
-    stages:[
-      { name:'Сдача и запуск', w:25, tasks:[
-        'Написать Номису: проект готов, жду номер WhatsApp и доступ к серверу',
-        'В том же письме зафиксировать: срок переноса, 2 недели тестового периода, дальше сопровождение $150/мес',
-        'Проверить в коде: автор сообщения в группе (не отправитель-группа) — иначе платежи сможет подтвердить любой участник',
-        'Проверить: CSP_STATUS_NO = 32 (Ticari Başkan Onayında)',
-        'Проверить: таблица собирается на финальных 9 столбцах клиента',
-        'Проверить: сброс дедупа при Geri Gönder — исправленный документ должен вернуться',
-        'Проверить: session.json держит сессию между перезапусками (нужно для 24/7)',
-        'Записать видео-демо полного цикла',
-        'Перенести на сервер клиента, запустить 24/7',
-        'Подключить боевую группу WhatsApp',
-        'Отдать инструкцию по эксплуатации + пояснить журнал journal.jsonl' ]},
-      { name:'Подписка $150/мес', w:15, tasks:[
-        'Проговорить подписку в момент сдачи, пока клиент доволен',
-        'Расписать что входит: сервер, мониторинг, ИИ-разбор вместо триггеров, архив скриншотов по датам',
-        'Получить первую оплату' ]},
-      { name:'Обучение $200', w:15, tasks:[
-        'Убедиться, что структура 8 модулей у клиента и получить правки',
-        'Получить оплату $200',
-        'Писать по 2 урока в неделю',
-        'Закрыть все 8 модулей' ]},
-      { name:'Проверка контрагентов', w:20, tasks:[
-        'Собрать файл вопросов по задаче (формат как по автоматизации платежей)',
-        'Созвон по задаче, записать',
-        'Собрать КП из транскрипта по системе 70-20-10',
-        'Согласовать цену и получить предоплату' ]},
-      { name:'Рефералы в Турции', w:25, tasks:[
-        'Спросить Номиса: язык материалов (TR/EN) и что нужно Memorial и стоматологии',
-        'Подготовить материалы на нужном языке',
-        'Выйти на контакт через Номиса',
-        'Довести до созвона',
-        'Закрыть первого реферала в сделку' ]}
-    ]},
-  { id:'clients', name:'Клиенты AKU Automation', weight:30,
-    goal:'3 новых платящих клиента до 31.12, из них минимум 2 на подписке',
-    stages:[
-      { name:'Оружие продаж', w:20, tasks:[
-        'Видео-демо 60–90 сек: платёж → WhatsApp → ответ → подтверждение в системе',
-        'Согласовать с Номисом публичную формулировку кейса',
-        'Кейс на aku-automation.io',
-        'Кейс в канал, Threads, TikTok' ]},
-      { name:'Реактивация тёплых', w:10, tasks:[
-        'Абдуллох (toolsworld): дожать условия оплаты, отправить референс-ролик',
-        'BTime Clinic: вернуться с видео-демо' ]},
-      { name:'Созвоны как основной формат', w:15, tasks:[
-        'Написать скрипт первого созвона на 15 минут — вопросы про боль, не презентация',
-        'Настроить запись созвона + транскрибацию',
-        'Шаблон КП из транскрипта по системе 70-20-10',
-        'Провести первые 3 созвона' ]},
-      { name:'Входящие из контента', w:25, tasks:[
-        'Пост «ищу бизнес для внедрения» в Threads — раз в неделю',
-        'Отвечать на каждое входящее в течение суток',
-        'Вести трекер лидов: кто, откуда, на какой стадии',
-        'Довести первое входящее до созвона',
-        'Закрыть первого клиента из входящих' ]},
-      { name:'Платный трафик', w:20, tasks:[
-        'Поставить Яндекс.Метрику на aku-automation.io',
-        'Подобрать 2–3 бизнес-канала в Telegram',
-        'Купить 2 поста в рамках $100',
-        'Посчитать цену заявки',
-        'Решение: масштабировать этот канал или менять' ]},
-      { name:'Ильяс', w:10, tasks:[
-        'Передать ему видео-демо и кейс Номиса',
-        'Созвон-разбор: что говорить, что не обещать',
-        'Проконтролировать его первые 20 касаний' ]}
-    ]},
-  { id:'lavka', name:'AKU Лавка', weight:20,
-    goal:'Первые продажи к 20 октября, $1000/мес чистыми к 31.12',
-    note:'Точка проверки 20.10 — если продаж нет, направление замораживается и часы уходят в клиентов',
-    stages:[
-      { name:'Фундамент', w:20, tasks:[
-        'Купить домен akulavka.com',
-        'Решить схему закупки подписок без зарубежной карты — как именно оформляем',
-        'Список стартовых позиций: Claude, ChatGPT, Gemini',
-        'Посчитать закупку, цену и маржу по каждой позиции',
-        'Собрать способы оплаты для РФ, Казахстана, Беларуси — больше, чем у конкурента' ]},
-      { name:'Сайт', w:25, tasks:[
-        'Структура страниц и тексты',
-        'Дизайн: тёплый, но по делу — не переносить стиль прошлых проектов',
-        'Каталог позиций с ценами',
-        'Оформление заказа → заявка в Telegram',
-        'Залить на GitHub Pages, привязать домен' ]},
-      { name:'Приём заказов', w:20, tasks:[
-        'Куда падают заявки и кто отвечает',
-        'Скрипт выдачи: что спрашиваем у клиента, что отдаём',
-        'Правила возврата и что делаем, если подписка слетела' ]},
-      { name:'Первые 10 продаж', w:20, tasks:[
-        'Анонс в канале «Лёха про ИИ»',
-        'Пост в Threads и TikTok',
-        'Обработать первые заявки вручную',
-        'Собрать 3 отзыва и выложить' ]},
-      { name:'Трафик', w:15, tasks:[
-        'Постоянная ссылка на Лавку в описании канала',
-        'Рубрика про подписки в контенте',
-        'Связка с ПлатиПоМиру для тех, кто хочет платить сам' ]}
-    ]},
-  { id:'content', name:'Контент-машина', weight:15,
-    goal:'Одна публикация в день. TG 538→1000, TikTok 338→2000, Threads 378→1500',
-    stages:[
-      { name:'Ритм', w:30, tasks:[
-        'Карусель каждый день в 21:00–22:00',
-        'Тот же материал дублировать в TikTok, Instagram, Threads',
-        'Продержать ритм 14 дней подряд',
-        'Продержать ритм месяц' ]},
-      { name:'Запас', w:20, tasks:[
-        'Собрать список из 30 тем',
-        'Держать 7 готовых каруселей на неделю вперёд' ]},
-      { name:'Threads', w:20, tasks:[
-        '2 коротких поста в день',
-        '20 минут комментариев в чужих ветках ежедневно',
-        'Закреп обновить на кейс Номиса' ]},
-      { name:'Аналитика', w:30, tasks:[
-        'Трекинговые ссылки на каждый канал',
-        'Недельная сводка: подписчики, заявки, откуда пришли',
-        'Ответить цифрами на вопрос — какой канал приносит клиентов',
-        'Убрать или сократить канал, который не приносит ничего' ]}
-    ]},
-  { id:'jobs', name:'Jobs Hub', weight:5,
-    goal:'Режим поддержки: не терять аудиторию. Час в неделю, не в день',
-    note:'Сознательно не развиваем, пока Лавка не пройдёт точку проверки',
-    stages:[
-      { name:'Ритм вакансий', w:40, tasks:[
-        '3–5 вакансий в неделю в канал',
-        'Держать ритм месяц без пропусков' ]},
-      { name:'Критичные техдолги', w:30, tasks:[
-        'Ключи Supabase вынести в .env',
-        'Включить RLS',
-        'Развести схему jobs / vacancies' ]},
-      { name:'Модель монетизации', w:30, tasks:[
-        'Выбрать модель на бумаге: платное размещение, комиссия или реклама',
-        'Посчитать, при каком количестве пользователей она окупается',
-        'Решить дату, когда возвращаемся к проекту всерьёз' ]}
-    ]},
-  { id:'personal', name:'Личное', weight:5,
-    goal:'Учёба закрыта, режим держится, деньги откладываются',
-    note:'Допиши сюда своё — я знаю про тебя не всё',
-    stages:[
-      { name:'Учёба и практика', w:40, tasks:[
-        'МИУП: закрыть семестр без долгов',
-        'Практика в «Двери Дориан»: отчёт сдан' ]},
-      { name:'Режим работы', w:35, tasks:[
-        'Один главный фронт в день, не три',
-        'Новые идеи не начинать — записывать в отдельный список и возвращаться раз в месяц',
-        'Держать честные 4–5 часов сфокусированной работы' ]},
-      { name:'Деньги', w:25, tasks:[
-        'Откладывать долю с каждого платежа клиента',
-        'Собрать на MacBook к началу 2027' ]}
-    ]}
+/* ===== ИСХОДНЫЙ ПЛАН ===== */
+const SEED_PLAN = [
+ { name:'Номис', weight:25, goal:'Превратить один проект в постоянного клиента: $500+/мес и 2 реферала из Турции', stages:[
+   { name:'Сдача и запуск', w:25, tasks:[
+     'Прогнать боевой цикл в группе Odeme_Onay_Test вместе с клиентом',
+     'Убедиться, что оставлены только 2 команды: ONAYLA→EVET и «номер документа + комментарий» → Geri Gönder',
+     'Проверить: автор сообщения в группе, а не отправитель-группа — иначе подтвердить платёж сможет любой участник',
+     'Проверить: сброс дедупа при Geri Gönder — исправленный документ должен вернуться',
+     'Выяснить: бот работает на тестовой системе или на боевой',
+     'Передать директору: инструкция по эксплуатации и журнал journal.jsonl',
+     'Зафиксировать письменно: 2 недели тестового периода, дальше сопровождение' ]},
+   { name:'Подписка $150/мес', w:15, tasks:[
+     'Проговорить подписку, пока клиент доволен запуском',
+     'Расписать что входит: сервер, мониторинг, ИИ-разбор вместо триггеров, архив скриншотов',
+     'Получить первую оплату' ]},
+   { name:'Обучение $200', w:15, tasks:[
+     'Согласовать структуру 8 модулей',
+     'Получить оплату $200',
+     'Писать по 2 урока в неделю',
+     'Закрыть все 8 модулей' ]},
+   { name:'Разбор бюллетеней Platts', w:15, tasks:[
+     'Взять у клиента 3–5 примеров PDF и финальный вид таблицы',
+     'Уточнить: разовый разбор папки или постоянная обработка новых файлов',
+     'Проверить, стабильна ли вёрстка PDF между датами',
+     'Назвать цену — бюджет маленький, значит фикс за скрипт, без подписки',
+     'Сдать рабочий скрипт' ]},
+   { name:'Проверка контрагентов', w:10, tasks:[
+     'Собрать файл вопросов по задаче',
+     'Созвон по задаче, записать',
+     'КП из транскрипта по системе 70-20-10',
+     'Согласовать цену и предоплату' ]},
+   { name:'Рефералы в Турции', w:20, tasks:[
+     'Спросить Номиса: язык материалов и что нужно Memorial и стоматологии',
+     'Подготовить материалы',
+     'Выйти на контакт через Номиса',
+     'Довести до созвона',
+     'Закрыть первого реферала' ]}
+ ]},
+ { name:'Клиенты AKU Automation', weight:30, goal:'3 новых платящих клиента до 31.12, минимум 2 на подписке', stages:[
+   { name:'Оружие продаж', w:20, tasks:[
+     'Видео-демо 60–90 сек: платёж → WhatsApp → ответ → подтверждение в системе',
+     'Согласовать с Номисом публичную формулировку кейса',
+     'Кейс на aku-automation.io',
+     'Кейс в канал, Threads, TikTok' ]},
+   { name:'Реактивация тёплых', w:10, tasks:[
+     'Абдуллох (toolsworld): дожать условия оплаты',
+     'BTime Clinic: вернуться с видео-демо' ]},
+   { name:'Созвоны', w:15, tasks:[
+     'Скрипт первого созвона на 15 минут — вопросы про боль, не презентация',
+     'Настроить запись созвона и транскрибацию',
+     'Шаблон КП из транскрипта по системе 70-20-10',
+     'Провести первые 3 созвона' ]},
+   { name:'Ниши и Ильяс', w:15, tasks:[
+     'Довести «Шамбалу» до созвона — объём и цену определяю сам',
+     'Проверить, как Ильяс работает по логистике',
+     'Собрать демо для авто-пригона и только потом открывать нишу' ]},
+   { name:'Входящие из контента', w:25, tasks:[
+     'Пост «ищу бизнес для внедрения» в Threads раз в неделю',
+     'Отвечать на каждое входящее в течение суток',
+     'Вести трекер лидов: кто, откуда, стадия',
+     'Довести первое входящее до созвона',
+     'Закрыть первого клиента из входящих' ]},
+   { name:'Платный трафик', w:15, tasks:[
+     'Поставить Яндекс.Метрику на aku-automation.io',
+     'Посевы в бизнес-каналах: 2 поста в рамках $100',
+     'Посчитать цену заявки и сравнить с Telegram Ads',
+     'Решение: масштабировать или менять канал' ]}
+ ]},
+ { name:'AKU Лавка', weight:20, goal:'Первые продажи к 20 октября, $1000/мес чистыми к 31.12',
+   note:'Точка проверки 20.10 — если продаж нет, направление замораживается', stages:[
+   { name:'Фундамент', w:20, tasks:[
+     'Зафиксировать закупку через Cashinout и посчитать маржу по каждой позиции',
+     'Список стартовых позиций: Claude, ChatGPT, Gemini',
+     'Прописать способы оплаты для РФ, Казахстана, Беларуси' ]},
+   { name:'Витрина', w:25, tasks:[
+     'Довести akulavka до рабочего вида',
+     'Каталог позиций с ценами',
+     'Оформление заказа → заявка в Telegram',
+     'Решить вопрос с доменом' ]},
+   { name:'Приём заказов', w:20, tasks:[
+     'Куда падают заявки и кто отвечает',
+     'Скрипт выдачи: что спрашиваем, что отдаём',
+     'Правила возврата, если подписка слетела' ]},
+   { name:'Первые 10 продаж', w:20, tasks:[
+     'Анонс в канале «Лёха про ИИ»',
+     'Пост в Threads и TikTok',
+     'Обработать первые заявки вручную',
+     'Собрать 3 отзыва' ]},
+   { name:'Трафик', w:15, tasks:[
+     'Постоянная ссылка на Лавку в описании канала',
+     'Рубрика про подписки в контенте',
+     'Партнёрские ссылки Cashinout для тех, кто платит сам' ]}
+ ]},
+ { name:'Контент-машина', weight:15, goal:'Одна публикация в день, аналитика на каждый канал', stages:[
+   { name:'Ритм', w:30, tasks:[
+     'Карусель каждый день',
+     'Дублировать в TikTok, Instagram, Threads',
+     'Продержать ритм 14 дней подряд',
+     'Продержать ритм месяц' ]},
+   { name:'Запас', w:20, tasks:['Список из 30 тем','Держать 7 готовых каруселей на неделю вперёд'] },
+   { name:'Threads', w:20, tasks:['2 коротких поста в день','20 минут комментариев ежедневно','Закреп обновить на кейс Номиса'] },
+   { name:'Аналитика', w:30, tasks:[
+     'Трекинговые ссылки на каждый канал',
+     'Недельная сводка: подписчики, заявки, откуда пришли',
+     'Сравнить посевы, кросс-промо и Telegram Ads по цене заявки',
+     'Убрать канал, который не приносит ничего' ]}
+ ]},
+ { name:'Jobs Hub', weight:5, goal:'Режим поддержки: не терять аудиторию. Час в неделю',
+   note:'Не развиваем, пока Лавка не пройдёт точку проверки', stages:[
+   { name:'Ритм вакансий', w:40, tasks:['3–5 вакансий в неделю','Держать ритм месяц без пропусков'] },
+   { name:'Критичные техдолги', w:30, tasks:['Ключи Supabase в .env','Включить RLS','Развести схему jobs / vacancies'] },
+   { name:'Монетизация', w:30, tasks:['Выбрать модель на бумаге','Посчитать точку окупаемости','Назначить дату возврата к проекту'] }
+ ]},
+ { name:'Личное', weight:5, goal:'Учёба закрыта, режим держится, деньги откладываются', stages:[
+   { name:'Учёба и практика', w:40, tasks:['МИУП: закрыть семестр без долгов','Практика в «Двери Дориан»: отчёт сдан'] },
+   { name:'Режим работы', w:35, tasks:[
+     'Один главный фронт в день, не три',
+     'Новые идеи записывать в список, не начинать сразу',
+     'Держать честные 4–5 часов сфокусированной работы' ]},
+   { name:'Деньги', w:25, tasks:['Откладывать долю с каждого платежа клиента','Закрыть расходы по срокам'] }
+ ]}
 ];
 
-/* ============ ХРАНИЛИЩЕ ============ */
-const KEY = 'aku-goals-v1', MKEY = 'aku-money-v1';
-let state = {}, money = null, memoryOnly = false;
-
-const DEFAULT_MONEY = {
+const SEED_MONEY = {
+  expenses: [
+    { name:'Билеты на Kai Angel', amount:215, cur:'BYN', date:'', note:'как можно быстрее, пока есть', paid:false, urgent:true },
+    { name:'Стрижка и покраска в белый', amount:250, cur:'BYN', date:'2026-10-01', note:'', paid:false },
+    { name:'Подарок Поле на день рождения — сумка', amount:250, cur:'USD', date:'2026-10-31', note:'', paid:false },
+    { name:'Подарок Поле на годовщину', amount:250, cur:'BYN', date:'2026-11-12', note:'годовщина 12.11', paid:false },
+    { name:'Цветы на годовщину', amount:100, cur:'BYN', date:'2026-11-12', note:'', paid:false },
+    { name:'Переустановка винды и обслуживание ПК', amount:250, cur:'BYN', date:'', note:'', paid:false },
+    { name:'Отложить на отдых', amount:2000, cur:'USD', date:'2027-02-01', note:'', paid:false },
+    { name:'MacBook', amount:1700, cur:'USD', date:'2027-03-01', note:'к весне', paid:false }
+  ],
   goals: [
-    { id:'g1', name:'MacBook 15.3 2026', target:1900, current:0, note:'к началу 2027' },
-    { id:'g2', name:'Подписки клиентов, $/мес', target:500, current:0, note:'MRR к 31.12' },
-    { id:'g3', name:'Доход AKU Automation, $/мес', target:1500, current:0, note:'к 31.12' },
-    { id:'g4', name:'Резерв на 3 месяца жизни', target:1500, current:0, note:'подушка, чтобы не соглашаться на плохие сделки' }
+    { name:'MacBook', target:1700, current:0, date:'2027-03-01', note:'' },
+    { name:'Отдых', target:2000, current:0, date:'2027-02-01', note:'' },
+    { name:'Резерв на 3 месяца жизни', target:1500, current:0, date:'2026-12-31', note:'чтобы не соглашаться на плохие сделки' },
+    { name:'Подписки клиентов, $/мес', target:500, current:0, date:'2026-12-31', note:'MRR' },
+    { name:'Доход AKU Automation, $/мес', target:1500, current:0, date:'2026-12-31', note:'' }
   ],
   wishes: [
-    { id:'w1', name:'MacBook 15.3 2026', price:1900, prio:'high', url:'', bought:false },
-    { id:'w2', name:'AirPods Pro 3', price:250, prio:'mid', url:'', bought:false },
-    { id:'w3', name:'Клавиатура', price:85, prio:'mid', url:'', bought:false },
-    { id:'w4', name:'Монитор для пк', price:160, prio:'mid', url:'', bought:false },
-    { id:'w5', name:'Игровая мышь', price:40, prio:'mid', url:'', bought:false }
+    { name:'MacBook 15.3 2026', price:1700, prio:'high', url:'', bought:false },
+    { name:'AirPods Pro 3', price:250, prio:'mid', url:'', bought:false },
+    { name:'Клавиатура', price:85, prio:'mid', url:'', bought:false },
+    { name:'Монитор для пк', price:160, prio:'mid', url:'', bought:false },
+    { name:'Игровая мышь', price:40, prio:'mid', url:'', bought:false }
   ]
 };
 
-function load() {
+/* ===== ХРАНИЛИЩЕ ===== */
+const PKEY='aku-plan-v2', MKEY='aku-money-v2', OLD_T='aku-goals-v1', OLD_M='aku-money-v1';
+let plan=null, money=null, memoryOnly=false, wFilter='all';
+const uid = () => 'x'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function buildPlan(){
+  return SEED_PLAN.map((d,di)=>({ id:'d'+di, name:d.name, weight:d.weight, goal:d.goal, note:d.note||'',
+    stages: d.stages.map((s,si)=>({ id:'d'+di+'s'+si, name:s.name, w:s.w,
+      tasks: s.tasks.map((t,ti)=>({ id:'d'+di+'s'+si+'t'+ti, text:t, done:false })) })) }));
+}
+
+function load(){
   try {
-    state = JSON.parse(localStorage.getItem(KEY) || '{}');
-    money = JSON.parse(localStorage.getItem(MKEY) || 'null') || structuredClone(DEFAULT_MONEY);
-  } catch (e) { memoryOnly = true; state = {}; money = structuredClone(DEFAULT_MONEY); }
+    plan = JSON.parse(localStorage.getItem(PKEY)||'null');
+    money = JSON.parse(localStorage.getItem(MKEY)||'null');
+  } catch(e){ memoryOnly=true; }
+  if(!plan){
+    plan = buildPlan();
+    try {
+      const old = JSON.parse(localStorage.getItem(OLD_T)||'{}');
+      if(Object.keys(old).length){
+        const ids=['nomus','clients','lavka','content','jobs','personal'];
+        plan.forEach((d,di)=>d.stages.forEach((s,si)=>s.tasks.forEach((t,ti)=>{
+          if(old[ids[di]+'.'+si+'.'+ti]) t.done=true;
+        })));
+      }
+    } catch(e){}
+  }
+  if(!money){
+    money = { expenses:[], goals:[], wishes:[] };
+    let oldM=null; try{ oldM=JSON.parse(localStorage.getItem(OLD_M)||'null'); }catch(e){}
+    money.expenses = SEED_MONEY.expenses.map(x=>({ id:uid(), ...x }));
+    money.goals = SEED_MONEY.goals.map(x=>({ id:uid(), ...x }));
+    money.wishes = (oldM && oldM.wishes ? oldM.wishes : SEED_MONEY.wishes).map(x=>({ id:x.id||uid(), ...x }));
+    if(oldM && oldM.goals) oldM.goals.forEach(g=>{
+      const m = money.goals.find(x=>x.name===g.name);
+      if(m && g.current>0) m.current=g.current;
+    });
+  }
+  ['expenses','goals','wishes'].forEach(k=>{ if(!Array.isArray(money[k])) money[k]=[]; });
 }
-function save() {
-  if (memoryOnly) return;
-  try { localStorage.setItem(KEY, JSON.stringify(state)); localStorage.setItem(MKEY, JSON.stringify(money)); }
-  catch (e) { memoryOnly = true; }
-}
-const money$ = n => '$' + Math.round(Number(n) || 0).toLocaleString('ru-RU').replace(/\u00A0/g, ' ');
-const uid = () => 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function save(){ if(memoryOnly) return;
+  try{ localStorage.setItem(PKEY,JSON.stringify(plan)); localStorage.setItem(MKEY,JSON.stringify(money)); }
+  catch(e){ memoryOnly=true; } }
 
-/* ============ ЗАДАЧИ ============ */
-const key = (d,s,t) => d + '.' + s + '.' + t;
-const isDone = (d,s,t) => !!state[key(d,s,t)];
-function stagePct(dir, si) {
-  const st = dir.stages[si];
-  const done = st.tasks.filter((_, ti) => isDone(dir.id, si, ti)).length;
-  return st.tasks.length ? done / st.tasks.length : 0;
-}
-function dirPct(dir) {
-  const tot = dir.stages.reduce((a,s) => a + s.w, 0);
-  const got = dir.stages.reduce((a,s,i) => a + s.w * stagePct(dir, i), 0);
-  return tot ? got / tot : 0;
-}
-function nextTask(dir) {
-  for (let si = 0; si < dir.stages.length; si++)
-    for (let ti = 0; ti < dir.stages[si].tasks.length; ti++)
-      if (!isDone(dir.id, si, ti)) return dir.stages[si].tasks[ti];
-  return null;
-}
-const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+const fmt = (n,cur) => (cur==='BYN' ? Math.round(Number(n)||0).toLocaleString('ru-RU').replace(/\u00A0/g,' ')+' Br'
+                                     : '$'+Math.round(Number(n)||0).toLocaleString('ru-RU').replace(/\u00A0/g,' '));
+const usd = n => '$'+Math.round(Number(n)||0).toLocaleString('ru-RU').replace(/\u00A0/g,' ');
 
-function renderPlan() {
-  document.getElementById('app').innerHTML = DATA.map(dir => {
-    const p = Math.round(dirPct(dir) * 100), nx = nextTask(dir);
-    const stages = dir.stages.map((st, si) => {
-      const sp = Math.round(stagePct(dir, si) * 100);
-      const tasks = st.tasks.map((t, ti) => {
-        const on = isDone(dir.id, si, ti);
-        return '<li class="task ' + (on ? 'on' : '') + ' flex gap-3 items-start py-[7px]">' +
-          '<button class="tick ' + (on ? 'on' : '') + '" data-d="' + dir.id + '" data-s="' + si + '" data-t="' + ti + '" aria-pressed="' + on + '" aria-label="Отметить">' + CHECK + '</button>' +
-          '<span class="t text-[14px] leading-[1.5]">' + esc(t) + '</span></li>';
-      }).join('');
-      return '<div class="pt-5 first:pt-1">' +
-        '<div class="flex items-baseline justify-between gap-3 mb-2">' +
-        '<h3 class="font-display text-[15px] font-semibold">' + esc(st.name) + '</h3>' +
-        '<span class="text-[12px] text-muted shrink-0 tabular-nums">' + sp + '% · вес ' + st.w + '</span></div>' +
-        '<div class="bar ' + (sp === 100 ? 'done' : '') + ' mb-1"><i style="width:' + sp + '%"></i></div>' +
-        '<ul>' + tasks + '</ul></div>';
+function daysTo(d){
+  if(!d) return null;
+  const a=new Date(d+'T00:00:00'), b=new Date(); b.setHours(0,0,0,0);
+  return Math.round((a-b)/86400000);
+}
+function dueBadge(d, urgent){
+  if(!d) return urgent ? '<span class="due due-red">срочно</span>' : '';
+  const n = daysTo(d);
+  let txt, cls;
+  if(n < 0){ txt='просрочено на '+Math.abs(n)+' дн.'; cls='due-red'; }
+  else if(n === 0){ txt='сегодня'; cls='due-red'; }
+  else if(n <= 14){ txt='осталось '+n+' дн.'; cls='due-red'; }
+  else if(n <= 45){ txt='осталось '+n+' дн.'; cls='due-gold'; }
+  else { txt='осталось '+n+' дн.'; cls='due-grey'; }
+  return '<span class="due '+cls+'">'+txt+'</span>';
+}
+const dateRu = d => d ? new Date(d+'T00:00:00').toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'}) : '';
+
+/* ===== РЕНДЕР ЗАДАЧ ===== */
+const CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+const PEN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+const TRASH='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>';
+
+const stagePct = s => s.tasks.length ? s.tasks.filter(t=>t.done).length/s.tasks.length : 0;
+function dirPct(d){ const tot=d.stages.reduce((a,s)=>a+s.w,0);
+  return tot ? d.stages.reduce((a,s)=>a+s.w*stagePct(s),0)/tot : 0; }
+function nextTask(d){ for(const s of d.stages) for(const t of s.tasks) if(!t.done) return t.text; return null; }
+
+function renderPlan(){
+  document.getElementById('app').innerHTML = plan.map(d=>{
+    const p=Math.round(dirPct(d)*100), nx=nextTask(d);
+    const stages = d.stages.map(s=>{
+      const sp=Math.round(stagePct(s)*100);
+      const tasks = s.tasks.map(t=>
+        '<li class="task '+(t.done?'on':'')+' flex gap-2.5 items-start py-[5px]">'+
+        '<button class="tick '+(t.done?'on':'')+'" data-tick="'+t.id+'" aria-label="Отметить">'+CHECK+'</button>'+
+        '<span class="t text-[14px] leading-[1.5] flex-1 min-w-0">'+esc(t.text)+'</span>'+
+        '<button class="ico" data-tedit="'+t.id+'" aria-label="Изменить">'+PEN+'</button>'+
+        '<button class="ico" data-tdel="'+t.id+'" aria-label="Удалить">'+TRASH+'</button></li>').join('');
+      return '<div class="pt-5 first:pt-1">'+
+        '<div class="flex items-baseline justify-between gap-3 mb-2">'+
+        '<h3 class="font-display text-[15px] font-semibold">'+esc(s.name)+'</h3>'+
+        '<span class="text-[12px] text-muted shrink-0 tabular-nums">'+sp+'% · вес '+s.w+'</span></div>'+
+        '<div class="bar '+(sp===100?'done':'')+' mb-1"><i style="width:'+sp+'%"></i></div>'+
+        '<ul>'+tasks+'</ul>'+
+        '<button class="btn-g mt-2" data-tadd="'+s.id+'">+ задача</button></div>';
     }).join('');
-
-    return '<details class="glass rounded-2xl overflow-hidden"><summary class="p-5">' +
-      '<div class="flex items-start justify-between gap-4"><div class="min-w-0">' +
-      '<div class="flex items-center gap-2.5 mb-1.5"><h2 class="font-display text-[19px] font-semibold">' + esc(dir.name) + '</h2>' +
-      '<span class="text-[11px] text-muted border border-white/10 rounded px-1.5 py-0.5 shrink-0">вес ' + dir.weight + '</span></div>' +
-      '<p class="text-[13px] text-muted leading-relaxed">' + esc(dir.goal) + '</p></div>' +
-      '<div class="text-right shrink-0"><div class="font-display text-[24px] font-bold tabular-nums ' + (p === 100 ? 'text-akugreen' : '') + '">' + p + '%</div>' +
-      '<svg class="chev w-4 h-4 text-muted ml-auto mt-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></div></div>' +
-      '<div class="bar ' + (p === 100 ? 'done' : '') + ' mt-4"><i style="width:' + p + '%"></i></div>' +
-      (nx ? '<p class="mt-3 text-[13px] leading-relaxed"><span class="text-akured">Следующий шаг:</span> <span class="text-white/80">' + esc(nx) + '</span></p>'
-          : '<p class="mt-3 text-[13px] text-akugreen">Направление закрыто полностью</p>') +
-      (dir.note ? '<p class="mt-2 text-[12px] text-muted leading-relaxed">' + esc(dir.note) + '</p>' : '') +
-      '</summary><div class="px-5 pb-5 border-t border-white/10">' + stages + '</div></details>';
+    return '<details class="glass rounded-2xl overflow-hidden"><summary class="p-5">'+
+      '<div class="flex items-start justify-between gap-4"><div class="min-w-0">'+
+      '<div class="flex items-center gap-2.5 mb-1.5"><h2 class="font-display text-[19px] font-semibold">'+esc(d.name)+'</h2>'+
+      '<span class="text-[11px] text-muted border border-white/10 rounded px-1.5 py-0.5 shrink-0">вес '+d.weight+'</span></div>'+
+      '<p class="text-[13px] text-muted leading-relaxed">'+esc(d.goal)+'</p></div>'+
+      '<div class="text-right shrink-0"><div class="font-display text-[24px] font-bold tabular-nums '+(p===100?'text-akugreen':'')+'">'+p+'%</div>'+
+      '<svg class="chev w-4 h-4 text-muted ml-auto mt-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></div></div>'+
+      '<div class="bar '+(p===100?'done':'')+' mt-4"><i style="width:'+p+'%"></i></div>'+
+      (nx?'<p class="mt-3 text-[13px] leading-relaxed"><span class="text-akured">Следующий шаг:</span> <span class="text-white/80">'+esc(nx)+'</span></p>'
+         :'<p class="mt-3 text-[13px] text-akugreen">Направление закрыто полностью</p>')+
+      (d.note?'<p class="mt-2 text-[12px] text-muted leading-relaxed">'+esc(d.note)+'</p>':'')+
+      '</summary><div class="px-5 pb-5 border-t border-white/10">'+stages+'</div></details>';
   }).join('');
 
-  const tw = DATA.reduce((a,d) => a + d.weight, 0);
-  const got = DATA.reduce((a,d) => a + d.weight * dirPct(d), 0);
-  const pct = Math.round(got / tw * 100);
-  document.getElementById('totalPct').textContent = pct + '%';
-  document.getElementById('totalBar').style.width = pct + '%';
-  let all = 0, done = 0;
-  DATA.forEach(d => d.stages.forEach((s, si) => {
-    all += s.tasks.length;
-    s.tasks.forEach((_, ti) => { if (isDone(d.id, si, ti)) done++; });
-  }));
+  const tw=plan.reduce((a,d)=>a+d.weight,0);
+  const pct=Math.round(plan.reduce((a,d)=>a+d.weight*dirPct(d),0)/tw*100);
+  document.getElementById('totalPct').textContent=pct+'%';
+  document.getElementById('totalBar').style.width=pct+'%';
+  let all=0,done=0;
+  plan.forEach(d=>d.stages.forEach(s=>s.tasks.forEach(t=>{all++; if(t.done)done++;})));
   document.getElementById('totalStats').textContent =
-    done + ' из ' + all + ' задач · ' + DATA.length + ' направления' + (memoryOnly ? ' · прогресс не сохраняется в этом окне' : '');
+    done+' из '+all+' задач · '+plan.length+' направления'+(memoryOnly?' · не сохраняется в этом окне':'');
 }
 
-/* ============ ДЕНЬГИ ============ */
-let wFilter = 'all';
-const PRIO = { high:{ label:'Высокий', cls:'text-gold border-gold/40 bg-gold/10', rank:0 },
-               mid: { label:'Средний', cls:'text-akugreen border-akugreen/35 bg-akugreen/10', rank:1 },
-               low: { label:'Низкий',  cls:'text-muted border-white/10', rank:2 } };
-
-function renderMoney() {
-  // цели
-  document.getElementById('goalList').innerHTML = money.goals.length ? money.goals.map(g => {
-    const p = g.target > 0 ? Math.min(100, Math.round(g.current / g.target * 100)) : 0;
-    return '<div class="glass rounded-2xl p-5">' +
-      '<div class="flex items-start justify-between gap-4 mb-3"><div class="min-w-0">' +
-      '<h3 class="font-display text-[16px] font-semibold mb-0.5">' + esc(g.name) + '</h3>' +
-      (g.note ? '<p class="text-[12px] text-muted">' + esc(g.note) + '</p>' : '') + '</div>' +
-      '<div class="text-right shrink-0"><div class="font-display text-[19px] font-bold tabular-nums ' + (p >= 100 ? 'text-akugreen' : 'text-gold') + '">' + p + '%</div></div></div>' +
-      '<div class="bar money ' + (p >= 100 ? 'done' : '') + ' mb-3"><i style="width:' + p + '%"></i></div>' +
-      '<div class="flex items-center justify-between gap-3 flex-wrap">' +
-      '<p class="text-[13px] tabular-nums"><span class="text-gold font-semibold">' + money$(g.current) + '</span>' +
-      '<span class="text-muted"> из ' + money$(g.target) + ' · осталось ' + money$(Math.max(0, g.target - g.current)) + '</span></p>' +
-      '<div class="flex gap-2"><button class="btn-g" data-gadd="' + g.id + '">Внести</button>' +
-      '<button class="btn-g" data-gedit="' + g.id + '">Правка</button>' +
-      '<button class="btn-g" data-gdel="' + g.id + '">Удалить</button></div></div></div>';
-  }).join('') : '<p class="text-[13px] text-muted">Целей пока нет — добавь первую.</p>';
-
-  // хотелки
-  let list = money.wishes.slice();
-  if (wFilter === 'bought') list = list.filter(w => w.bought);
-  else if (wFilter !== 'all') list = list.filter(w => !w.bought && w.prio === wFilter);
-  else list = list.filter(w => !w.bought).concat(list.filter(w => w.bought));
-
-  const sort = document.getElementById('wSort').value;
-  if (sort === 'cheap') list.sort((a,b) => (a.bought - b.bought) || (a.price - b.price));
-  else if (sort === 'rich') list.sort((a,b) => (a.bought - b.bought) || (b.price - a.price));
-  else list.sort((a,b) => (a.bought - b.bought) || (PRIO[a.prio].rank - PRIO[b.prio].rank) || (b.price - a.price));
-
-  document.getElementById('wishList').innerHTML = list.length ? list.map(w => {
-    const P = PRIO[w.prio] || PRIO.mid;
-    return '<div class="glass rounded-2xl p-5 ' + (w.bought ? 'bought' : '') + '">' +
-      '<div class="flex items-start justify-between gap-3 mb-2">' +
-      '<h3 class="nm font-display text-[15px] font-semibold leading-snug">' + esc(w.name) + '</h3>' +
-      '<span class="text-[11px] border rounded px-2 py-0.5 shrink-0 ' + P.cls + '">' + P.label + '</span></div>' +
-      '<p class="font-display text-[24px] font-bold text-gold tabular-nums mb-3">' + money$(w.price) + '</p>' +
-      '<div class="flex flex-wrap gap-2">' +
-      (w.url ? '<a class="btn-g inline-block" href="' + esc(w.url) + '" target="_blank" rel="noopener noreferrer">Открыть</a>' : '') +
-      '<button class="btn-g" data-wbuy="' + w.id + '">' + (w.bought ? 'Вернуть в список' : 'Куплено') + '</button>' +
-      '<button class="btn-g" data-wdel="' + w.id + '">Удалить</button></div></div>';
-  }).join('') : '<p class="text-[13px] text-muted">Пока пусто.</p>';
-
-  const openSum = money.wishes.filter(w => !w.bought).reduce((a,w) => a + Number(w.price || 0), 0);
-  const boughtSum = money.wishes.filter(w => w.bought).reduce((a,w) => a + Number(w.price || 0), 0);
-  document.getElementById('wishSub').textContent =
-    'Не куплено на ' + money$(openSum) + (boughtSum ? ' · куплено на ' + money$(boughtSum) : '');
-
-  const saved = money.goals.reduce((a,g) => a + Number(g.current || 0), 0);
-  const left = money.goals.reduce((a,g) => a + Math.max(0, Number(g.target || 0) - Number(g.current || 0)), 0);
-  document.getElementById('mSaved').textContent = money$(saved);
-  document.getElementById('mLeft').textContent = money$(left);
-  document.getElementById('mWish').textContent = money$(openSum);
+function findTask(id){
+  for(const d of plan) for(const s of d.stages){ const t=s.tasks.find(x=>x.id===id); if(t) return {t,s}; }
+  return null;
 }
 
-function render() { renderPlan(); renderMoney(); }
+/* ===== РЕНДЕР ДЕНЕГ ===== */
+function renderMoney(){
+  const ex = money.expenses.slice().sort((a,b)=>{
+    if(a.paid!==b.paid) return a.paid?1:-1;
+    if(a.urgent&&!a.date) return -1; if(b.urgent&&!b.date) return 1;
+    if(!a.date) return 1; if(!b.date) return -1;
+    return a.date.localeCompare(b.date);
+  });
+  document.getElementById('expList').innerHTML = ex.length ? ex.map(e=>
+    '<div class="glass rounded-2xl p-5 '+(e.paid?'done-x':'')+'">'+
+    '<div class="flex items-start justify-between gap-3 mb-2"><div class="min-w-0">'+
+    '<h3 class="nm font-display text-[15px] font-semibold leading-snug mb-1">'+esc(e.name)+'</h3>'+
+    '<p class="text-[12px] text-muted">'+(e.date?esc(dateRu(e.date)):'без срока')+(e.note?' · '+esc(e.note):'')+'</p></div>'+
+    (e.paid?'<span class="due due-grey">оплачено</span>':dueBadge(e.date,e.urgent))+'</div>'+
+    '<p class="font-display text-[22px] font-bold text-gold tabular-nums mb-3">'+fmt(e.amount,e.cur)+'</p>'+
+    '<div class="flex flex-wrap gap-2">'+
+    '<button class="btn-g" data-epaid="'+e.id+'">'+(e.paid?'Вернуть':'Оплачено')+'</button>'+
+    '<button class="btn-g" data-eedit="'+e.id+'">Правка</button>'+
+    '<button class="btn-g" data-edel="'+e.id+'">Удалить</button></div></div>').join('')
+    : '<p class="text-[13px] text-muted">Расходов нет.</p>';
 
-/* ============ СОБЫТИЯ ============ */
-document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
-  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === b));
-  const v = b.dataset.view;
-  document.getElementById('view-plan').classList.toggle('hidden', v !== 'plan');
-  document.getElementById('view-money').classList.toggle('hidden', v !== 'money');
+  const openU = money.expenses.filter(e=>!e.paid&&e.cur==='USD').reduce((a,e)=>a+Number(e.amount||0),0);
+  const openB = money.expenses.filter(e=>!e.paid&&e.cur==='BYN').reduce((a,e)=>a+Number(e.amount||0),0);
+  const soon = money.expenses.filter(e=>!e.paid&&e.date&&daysTo(e.date)<=30).length;
+  document.getElementById('expSub').textContent =
+    'Не оплачено: '+usd(openU)+' и '+Math.round(openB)+' Br'+(soon?' · ближайшие 30 дней: '+soon:'');
+  document.getElementById('mExp').innerHTML = usd(openU)+'<br><span class="text-[14px] text-muted">'+Math.round(openB)+' Br</span>';
+
+  document.getElementById('goalList').innerHTML = money.goals.length ? money.goals.map(g=>{
+    const p = g.target>0 ? Math.min(100,Math.round(g.current/g.target*100)) : 0;
+    return '<div class="glass rounded-2xl p-5">'+
+      '<div class="flex items-start justify-between gap-3 mb-3"><div class="min-w-0">'+
+      '<h3 class="font-display text-[16px] font-semibold mb-1">'+esc(g.name)+'</h3>'+
+      '<div class="flex items-center gap-2 flex-wrap">'+dueBadge(g.date)+
+      (g.note?'<span class="text-[12px] text-muted">'+esc(g.note)+'</span>':'')+'</div></div>'+
+      '<div class="font-display text-[19px] font-bold tabular-nums shrink-0 '+(p>=100?'text-akugreen':'text-gold')+'">'+p+'%</div></div>'+
+      '<div class="bar money '+(p>=100?'done':'')+' mb-3"><i style="width:'+p+'%"></i></div>'+
+      '<div class="flex items-center justify-between gap-3 flex-wrap">'+
+      '<p class="text-[13px] tabular-nums"><span class="text-gold font-semibold">'+usd(g.current)+'</span>'+
+      '<span class="text-muted"> из '+usd(g.target)+' · осталось '+usd(Math.max(0,g.target-g.current))+'</span></p>'+
+      '<div class="flex gap-2"><button class="btn-g" data-gadd="'+g.id+'">Внести</button>'+
+      '<button class="btn-g" data-gedit="'+g.id+'">Правка</button>'+
+      '<button class="btn-g" data-gdel="'+g.id+'">Удалить</button></div></div></div>';
+  }).join('') : '<p class="text-[13px] text-muted">Целей нет.</p>';
+
+  const saved=money.goals.reduce((a,g)=>a+Number(g.current||0),0);
+  const left=money.goals.reduce((a,g)=>a+Math.max(0,Number(g.target||0)-Number(g.current||0)),0);
+  document.getElementById('mSaved').textContent=usd(saved);
+  document.getElementById('mLeft').textContent=usd(left);
+}
+
+/* ===== РЕНДЕР ХОТЕЛОК ===== */
+const PRIO={ high:{label:'Высокий',cls:'text-gold border-gold/40 bg-gold/10',rank:0},
+             mid:{label:'Средний',cls:'text-akugreen border-akugreen/35 bg-akugreen/10',rank:1},
+             low:{label:'Низкий',cls:'text-muted border-white/10',rank:2} };
+function renderWish(){
+  let list=money.wishes.slice();
+  if(wFilter==='bought') list=list.filter(w=>w.bought);
+  else if(wFilter!=='all') list=list.filter(w=>!w.bought&&w.prio===wFilter);
+  const sort=document.getElementById('wSort').value;
+  if(sort==='cheap') list.sort((a,b)=>(a.bought-b.bought)||(a.price-b.price));
+  else if(sort==='rich') list.sort((a,b)=>(a.bought-b.bought)||(b.price-a.price));
+  else list.sort((a,b)=>(a.bought-b.bought)||((PRIO[a.prio]||PRIO.mid).rank-(PRIO[b.prio]||PRIO.mid).rank)||(b.price-a.price));
+
+  document.getElementById('wishList').innerHTML = list.length ? list.map(w=>{
+    const P=PRIO[w.prio]||PRIO.mid;
+    return '<div class="glass rounded-2xl p-5 '+(w.bought?'done-x':'')+'">'+
+      '<div class="flex items-start justify-between gap-3 mb-2">'+
+      '<h3 class="nm font-display text-[15px] font-semibold leading-snug">'+esc(w.name)+'</h3>'+
+      '<span class="text-[11px] border rounded px-2 py-0.5 shrink-0 '+P.cls+'">'+P.label+'</span></div>'+
+      '<p class="font-display text-[23px] font-bold text-gold tabular-nums mb-3">'+usd(w.price)+'</p>'+
+      '<div class="flex flex-wrap gap-2">'+
+      (w.url?'<a class="btn-g inline-block" href="'+esc(w.url)+'" target="_blank" rel="noopener noreferrer">Открыть</a>':'')+
+      '<button class="btn-g" data-wbuy="'+w.id+'">'+(w.bought?'Вернуть':'Куплено')+'</button>'+
+      '<button class="btn-g" data-wedit="'+w.id+'">Правка</button>'+
+      '<button class="btn-g" data-wdel="'+w.id+'">Удалить</button></div></div>';
+  }).join('') : '<p class="text-[13px] text-muted">Пусто.</p>';
+
+  const o=money.wishes.filter(w=>!w.bought).reduce((a,w)=>a+Number(w.price||0),0);
+  const b=money.wishes.filter(w=>w.bought).reduce((a,w)=>a+Number(w.price||0),0);
+  document.getElementById('wishSub').textContent='Не куплено на '+usd(o)+(b?' · куплено на '+usd(b):'');
+}
+
+function render(){ renderPlan(); renderMoney(); renderWish(); }
+
+/* ===== СОБЫТИЯ ===== */
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===b));
+  ['plan','money','wish'].forEach(v=>document.getElementById('view-'+v).classList.toggle('hidden',v!==b.dataset.view));
 }));
 
-document.addEventListener('click', e => {
-  const t = e.target.closest('.tick');
-  if (t) {
-    const k = key(t.dataset.d, t.dataset.s, t.dataset.t);
-    const y = window.scrollY;
-    if (state[k]) delete state[k]; else state[k] = true;
-    save();
-    const open = [...document.querySelectorAll('#app details')].map(d => d.open);
-    renderPlan();
-    [...document.querySelectorAll('#app details')].forEach((d, i) => d.open = open[i]);
-    window.scrollTo(0, y);
-    return;
-  }
+function keepOpen(fn){
+  const y=window.scrollY, open=[...document.querySelectorAll('#app details')].map(d=>d.open);
+  fn(); renderPlan();
+  [...document.querySelectorAll('#app details')].forEach((d,i)=>d.open=open[i]);
+  window.scrollTo(0,y);
+}
+const num = v => { const n=parseFloat(String(v).replace(',','.')); return isNaN(n)?null:n; };
 
-  const gAdd = e.target.closest('[data-gadd]');
-  if (gAdd) {
-    const g = money.goals.find(x => x.id === gAdd.dataset.gadd);
-    const v = prompt('Сколько добавить к «' + g.name + '»? Можно с минусом, чтобы убавить.', '');
-    if (v === null) return;
-    const n = parseFloat(String(v).replace(',', '.'));
-    if (isNaN(n)) return;
-    g.current = Math.max(0, Number(g.current || 0) + n);
-    save(); renderMoney(); return;
-  }
-  const gEd = e.target.closest('[data-gedit]');
-  if (gEd) {
-    const g = money.goals.find(x => x.id === gEd.dataset.gedit);
-    const name = prompt('Название цели', g.name); if (name === null) return;
-    const tgt = prompt('Сумма цели, $', g.target); if (tgt === null) return;
-    const cur = prompt('Уже есть, $', g.current); if (cur === null) return;
-    const note = prompt('Срок или пояснение', g.note || ''); if (note === null) return;
-    g.name = name.trim() || g.name;
-    g.target = Math.max(0, parseFloat(String(tgt).replace(',', '.')) || 0);
-    g.current = Math.max(0, parseFloat(String(cur).replace(',', '.')) || 0);
-    g.note = note.trim();
-    save(); renderMoney(); return;
-  }
-  const gDel = e.target.closest('[data-gdel]');
-  if (gDel) {
-    const g = money.goals.find(x => x.id === gDel.dataset.gdel);
-    if (confirm('Удалить цель «' + g.name + '»?')) { money.goals = money.goals.filter(x => x.id !== g.id); save(); renderMoney(); }
-    return;
-  }
-  const wBuy = e.target.closest('[data-wbuy]');
-  if (wBuy) {
-    const w = money.wishes.find(x => x.id === wBuy.dataset.wbuy);
-    w.bought = !w.bought; save(); renderMoney(); return;
-  }
-  const wDel = e.target.closest('[data-wdel]');
-  if (wDel) {
-    const w = money.wishes.find(x => x.id === wDel.dataset.wdel);
-    if (confirm('Удалить «' + w.name + '» из списка?')) { money.wishes = money.wishes.filter(x => x.id !== w.id); save(); renderMoney(); }
-    return;
-  }
-  const chip = e.target.closest('.chip');
-  if (chip) {
-    wFilter = chip.dataset.f;
-    document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === chip));
-    renderMoney(); return;
-  }
+document.addEventListener('click', e=>{
+  let el;
+  if(el=e.target.closest('[data-tick]')){ const f=findTask(el.dataset.tick); if(f) keepOpen(()=>{f.t.done=!f.t.done; save();}); return; }
+  if(el=e.target.closest('[data-tedit]')){ const f=findTask(el.dataset.tedit); if(!f) return;
+    const v=prompt('Текст задачи',f.t.text); if(v===null) return;
+    if(!v.trim()) return; keepOpen(()=>{f.t.text=v.trim(); save();}); return; }
+  if(el=e.target.closest('[data-tdel]')){ const f=findTask(el.dataset.tdel); if(!f) return;
+    if(!confirm('Удалить задачу?\n\n'+f.t.text)) return;
+    keepOpen(()=>{ f.s.tasks=f.s.tasks.filter(x=>x.id!==f.t.id); save(); }); return; }
+  if(el=e.target.closest('[data-tadd]')){ const id=el.dataset.tadd;
+    let st=null; plan.forEach(d=>d.stages.forEach(s=>{ if(s.id===id) st=s; }));
+    if(!st) return; const v=prompt('Новая задача в блок «'+st.name+'»',''); if(!v||!v.trim()) return;
+    keepOpen(()=>{ st.tasks.push({id:uid(),text:v.trim(),done:false}); save(); }); return; }
+
+  if(el=e.target.closest('[data-epaid]')){ const x=money.expenses.find(i=>i.id===el.dataset.epaid);
+    x.paid=!x.paid; save(); renderMoney(); return; }
+  if(el=e.target.closest('[data-eedit]')){ const x=money.expenses.find(i=>i.id===el.dataset.eedit);
+    const n=prompt('Название',x.name); if(n===null) return;
+    const a=prompt('Сумма',x.amount); if(a===null) return;
+    const c=prompt('Валюта: USD или BYN',x.cur); if(c===null) return;
+    const d=prompt('Дата в формате ГГГГ-ММ-ДД (пусто — без срока)',x.date||''); if(d===null) return;
+    const nt=prompt('Пояснение',x.note||''); if(nt===null) return;
+    x.name=n.trim()||x.name; x.amount=num(a)??x.amount;
+    x.cur=String(c).toUpperCase()==='BYN'?'BYN':'USD';
+    x.date=/^\d{4}-\d{2}-\d{2}$/.test(d.trim())?d.trim():''; x.note=nt.trim();
+    save(); renderMoney(); return; }
+  if(el=e.target.closest('[data-edel]')){ const x=money.expenses.find(i=>i.id===el.dataset.edel);
+    if(confirm('Удалить расход «'+x.name+'»?')){ money.expenses=money.expenses.filter(i=>i.id!==x.id); save(); renderMoney(); } return; }
+
+  if(el=e.target.closest('[data-gadd]')){ const g=money.goals.find(i=>i.id===el.dataset.gadd);
+    const v=prompt('Сколько добавить к «'+g.name+'»? Можно с минусом.',''); if(v===null) return;
+    const n=num(v); if(n===null) return; g.current=Math.max(0,Number(g.current||0)+n); save(); renderMoney(); return; }
+  if(el=e.target.closest('[data-gedit]')){ const g=money.goals.find(i=>i.id===el.dataset.gedit);
+    const n=prompt('Название',g.name); if(n===null) return;
+    const t=prompt('Сумма цели, $',g.target); if(t===null) return;
+    const c=prompt('Уже есть, $',g.current); if(c===null) return;
+    const d=prompt('Срок ГГГГ-ММ-ДД (пусто — без срока)',g.date||''); if(d===null) return;
+    const nt=prompt('Пояснение',g.note||''); if(nt===null) return;
+    g.name=n.trim()||g.name; g.target=Math.max(0,num(t)??g.target); g.current=Math.max(0,num(c)??g.current);
+    g.date=/^\d{4}-\d{2}-\d{2}$/.test(d.trim())?d.trim():''; g.note=nt.trim();
+    save(); renderMoney(); return; }
+  if(el=e.target.closest('[data-gdel]')){ const g=money.goals.find(i=>i.id===el.dataset.gdel);
+    if(confirm('Удалить цель «'+g.name+'»?')){ money.goals=money.goals.filter(i=>i.id!==g.id); save(); renderMoney(); } return; }
+
+  if(el=e.target.closest('[data-wbuy]')){ const w=money.wishes.find(i=>i.id===el.dataset.wbuy);
+    w.bought=!w.bought; save(); renderWish(); return; }
+  if(el=e.target.closest('[data-wedit]')){ const w=money.wishes.find(i=>i.id===el.dataset.wedit);
+    const n=prompt('Название',w.name); if(n===null) return;
+    const p=prompt('Цена, $',w.price); if(p===null) return;
+    const pr=prompt('Приоритет: high, mid или low',w.prio); if(pr===null) return;
+    const u=prompt('Ссылка',w.url||''); if(u===null) return;
+    w.name=n.trim()||w.name; w.price=num(p)??w.price;
+    w.prio=['high','mid','low'].includes(pr.trim())?pr.trim():w.prio; w.url=u.trim();
+    save(); renderWish(); return; }
+  if(el=e.target.closest('[data-wdel]')){ const w=money.wishes.find(i=>i.id===el.dataset.wdel);
+    if(confirm('Удалить «'+w.name+'»?')){ money.wishes=money.wishes.filter(i=>i.id!==w.id); save(); renderWish(); } return; }
+
+  if(el=e.target.closest('.chip')){ wFilter=el.dataset.f;
+    document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c===el)); renderWish(); return; }
 });
 
-document.getElementById('wSort').addEventListener('change', renderMoney);
+document.getElementById('wSort').addEventListener('change', renderWish);
 
-const gForm = document.getElementById('goalForm'), wForm = document.getElementById('wishForm');
-document.getElementById('addGoalBtn').addEventListener('click', () => gForm.classList.toggle('hidden'));
-document.getElementById('gCancel').addEventListener('click', () => gForm.classList.add('hidden'));
-document.getElementById('gSave').addEventListener('click', () => {
-  const name = document.getElementById('gName').value.trim();
-  const target = parseFloat(document.getElementById('gTarget').value) || 0;
-  if (!name || target <= 0) { alert('Нужны название и сумма цели больше нуля'); return; }
-  money.goals.push({ id: uid(), name, target,
-    current: Math.max(0, parseFloat(document.getElementById('gCurrent').value) || 0),
-    note: document.getElementById('gNote').value.trim() });
-  ['gName','gTarget','gCurrent','gNote'].forEach(i => document.getElementById(i).value = '');
-  gForm.classList.add('hidden'); save(); renderMoney();
+function formToggle(btn, box, cancel){
+  document.getElementById(btn).addEventListener('click',()=>document.getElementById(box).classList.toggle('hidden'));
+  document.getElementById(cancel).addEventListener('click',()=>document.getElementById(box).classList.add('hidden'));
+}
+formToggle('addExpBtn','expForm','eCancel');
+formToggle('addGoalBtn','goalForm','gCancel');
+formToggle('addWishBtn','wishForm','wCancel');
+
+document.getElementById('eSave').addEventListener('click',()=>{
+  const n=document.getElementById('eName').value.trim();
+  if(!n){ alert('Напиши, на что расход'); return; }
+  money.expenses.push({ id:uid(), name:n, amount:num(document.getElementById('eAmount').value)||0,
+    cur:document.getElementById('eCur').value, date:document.getElementById('eDate').value,
+    note:document.getElementById('eNote').value.trim(), paid:false });
+  ['eName','eAmount','eDate','eNote'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('expForm').classList.add('hidden'); save(); renderMoney();
+});
+document.getElementById('gSave').addEventListener('click',()=>{
+  const n=document.getElementById('gName').value.trim(), t=num(document.getElementById('gTarget').value)||0;
+  if(!n||t<=0){ alert('Нужны название и сумма больше нуля'); return; }
+  money.goals.push({ id:uid(), name:n, target:t, current:Math.max(0,num(document.getElementById('gCurrent').value)||0),
+    date:document.getElementById('gDate').value, note:document.getElementById('gNote').value.trim() });
+  ['gName','gTarget','gCurrent','gDate','gNote'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('goalForm').classList.add('hidden'); save(); renderMoney();
+});
+document.getElementById('wSave').addEventListener('click',()=>{
+  const n=document.getElementById('wName').value.trim();
+  if(!n){ alert('Напиши, что хочешь купить'); return; }
+  money.wishes.push({ id:uid(), name:n, price:num(document.getElementById('wPrice').value)||0,
+    prio:document.getElementById('wPrio').value, url:document.getElementById('wUrl').value.trim(), bought:false });
+  ['wName','wPrice','wUrl'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('wishForm').classList.add('hidden'); save(); renderWish();
 });
 
-document.getElementById('addWishBtn').addEventListener('click', () => wForm.classList.toggle('hidden'));
-document.getElementById('wCancel').addEventListener('click', () => wForm.classList.add('hidden'));
-document.getElementById('wSave').addEventListener('click', () => {
-  const name = document.getElementById('wName').value.trim();
-  const price = parseFloat(document.getElementById('wPrice').value) || 0;
-  if (!name) { alert('Напиши, что хочешь купить'); return; }
-  money.wishes.push({ id: uid(), name, price, prio: document.getElementById('wPrio').value,
-    url: document.getElementById('wUrl').value.trim(), bought: false });
-  ['wName','wPrice','wUrl'].forEach(i => document.getElementById(i).value = '');
-  wForm.classList.add('hidden'); save(); renderMoney();
+/* ===== ПЕРЕНОС ===== */
+const box=document.getElementById('syncBox');
+document.getElementById('syncBtn').addEventListener('click',()=>{
+  document.getElementById('syncText').value=JSON.stringify({plan,money});
+  box.classList.add('on');
+});
+document.getElementById('syncClose').addEventListener('click',()=>box.classList.remove('on'));
+document.getElementById('syncCopy').addEventListener('click',async()=>{
+  const t=document.getElementById('syncText'); t.select();
+  try{ await navigator.clipboard.writeText(t.value); alert('Скопировано'); }
+  catch(e){ try{ document.execCommand('copy'); alert('Скопировано'); }catch(e2){ alert('Выдели текст и скопируй вручную'); } }
+});
+document.getElementById('syncLoad').addEventListener('click',()=>{
+  try{
+    const d=JSON.parse(document.getElementById('syncText').value);
+    if(!d.plan||!d.money) throw 0;
+    if(!confirm('Заменить все данные на этом устройстве?')) return;
+    plan=d.plan; money=d.money;
+    ['expenses','goals','wishes'].forEach(k=>{ if(!Array.isArray(money[k])) money[k]=[]; });
+    save(); render(); box.classList.remove('on'); alert('Загружено');
+  }catch(e){ alert('Код не читается — скопируй его целиком'); }
 });
 
-document.getElementById('reset').addEventListener('click', () => {
-  if (!confirm('Снять все галочки по задачам и вернуть деньги к исходному списку?')) return;
-  state = {}; money = structuredClone(DEFAULT_MONEY); save(); render();
+document.getElementById('reset').addEventListener('click',()=>{
+  if(!confirm('Вернуть всё к исходному состоянию? Твои правки пропадут.')) return;
+  try{ localStorage.removeItem(PKEY); localStorage.removeItem(MKEY); }catch(e){}
+  plan=null; money=null; load(); render();
 });
 
-(function () {
-  const n = Math.max(0, Math.ceil((new Date('2026-12-31T23:59:59') - new Date()) / 86400000));
-  document.getElementById('daysLeft').textContent = n + ' дней до конца года';
-})();
+(function(){ const n=Math.max(0,Math.ceil((new Date('2026-12-31T23:59:59')-new Date())/86400000));
+  document.getElementById('daysLeft').textContent=n+' дней до конца года'; })();
 
-load();
-render();
+load(); render();
 </script>
 </body>
 </html>
